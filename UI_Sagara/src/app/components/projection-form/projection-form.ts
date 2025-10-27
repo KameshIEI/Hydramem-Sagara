@@ -360,58 +360,140 @@ export class ProjectionFormComponent implements OnInit, OnDestroy {
         const formValues = this.projectionForm.getRawValue();
 
         // Use exact CSV headers for matching
+         // Use the exact CSV header names from master.csv and remove Water Source (not present in CSV)
          const keyParamsToMatch = {
-             'Feed flow (m³/h)': parseFloat(formValues.txtFeedFlow.toFixed(2)),
-             'Recovery (%)': parseFloat(formValues.txtRecovery.toFixed(2)),
-             'Feed temperature (°C)': parseFloat(formValues.txtWaterTemperatute1.toFixed(2)),
-             'Feed pH': parseFloat(formValues.pH1.toFixed(2)),
-             'Water Source': formValues.drpWaterSource1
+             'Feed Flow (m3/hr)': parseFloat(formValues.txtFeedFlow.toFixed(2)),
+             'Recovery(%)': parseFloat(formValues.txtRecovery.toFixed(2)),
+             'Feed Temperature': parseFloat(formValues.txtWaterTemperatute1.toFixed(2)),
+             'Feed water pH': parseFloat(formValues.pH1.toFixed(2))
          };
 
 
         console.log("Attempting to match:", keyParamsToMatch);
         this.calculationMessage = 'Searching for matching projection...';
 
-        this.foundResult = this.csvData.find(row => {
-            let match = true;
-            for (const key in keyParamsToMatch) {
-                const formValue = keyParamsToMatch[key as keyof typeof keyParamsToMatch];
-                const csvValue = row[key]; // Use cleaned key
+        // Ensure CSV is loaded
+        if (!this.csvData || !Array.isArray(this.csvData) || this.csvData.length === 0) {
+            console.warn('CSV data not loaded yet or is empty.');
+            this.calculationMessage = 'Data not available yet. Please wait for the CSV to load and try again.';
+            return;
+        }
 
-                if (csvValue === undefined || csvValue === null) {
-                    // console.warn(`CSV column "${key}" not found or null in row.`);
-                    // Decide if missing value means no match or skip check
-                     // If the key param MUST exist, uncomment below:
-                     // match = false;
-                     // break;
-                     continue; // Skip check if column is missing/null in this row
-                }
+        // Build a normalized header map so small header differences won't break matching
+        const csvHeaders = Object.keys(this.csvData[0] || {});
+        const normalize = (s: any) => {
+            if (s === null || s === undefined) return '';
+            let t = String(s);
+            // Replace common unicode/symbol variants
+            t = t.replace(/³/g, '3');
+            t = t.replace(/°/g, '');
+            t = t.replace(/µ/g, 'u');
+            // Replace slash style units and braces, then remove non-alphanum
+            t = t.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+            return t;
+        };
 
-                // Numeric comparison with tolerance
-                if (typeof formValue === 'number') {
-                    const csvNum = Number(csvValue);
-                     if (isNaN(csvNum) || Math.abs(formValue - csvNum) > 0.01) { // Tolerance of 0.01
-                         // console.log(`Mismatch ${key}: Form=${formValue}, CSV=${csvValue}`);
-                        match = false;
-                        break;
-                    }
-                }
-                 // Add specific string/other comparisons if needed
-                 else if (formValue !== csvValue) {
-                     // console.log(`Mismatch ${key}: Form=${formValue}, CSV=${csvValue}`);
-                     match = false;
-                     break;
-                 }
+        const headerMap: { [norm: string]: string } = {};
+        csvHeaders.forEach(h => headerMap[normalize(h)] = h);
+
+        // Tokenize helper for improved fuzzy matching (handles word reordering / extra words)
+        const tokens = (s: string) => {
+            return normalize(s).match(/[a-z0-9]+/g) || [];
+        };
+
+        // Precompute header token sets
+        const headerTokens: { hdr: string; tokens: string[] }[] = csvHeaders.map(h => ({ hdr: h, tokens: tokens(h) }));
+
+        // Try to map each required key to a CSV header using token-subset matching
+        const keyToHeader: { [key: string]: string | null } = {};
+        const missingColumns: string[] = [];
+        for (const key of Object.keys(keyParamsToMatch)) {
+            const keyTokens = tokens(key);
+            // Exact normalized match first
+            let matched = headerMap[normalize(key)];
+            if (!matched) {
+                // Find header where all key tokens are present in header tokens (subset)
+                const found = headerTokens.find(h => {
+                    const hset = new Set(h.tokens);
+                    return keyTokens.every(t => hset.has(t));
+                });
+                if (found) matched = found.hdr;
             }
-            return match;
+            if (!matched) {
+                // As a last resort, allow header tokens subset of key tokens
+                const found2 = headerTokens.find(h => {
+                    const kset = new Set(keyTokens);
+                    return h.tokens.every(t => kset.has(t));
+                });
+                if (found2) matched = found2.hdr;
+            }
+            if (!matched) {
+                missingColumns.push(key);
+                keyToHeader[key] = null;
+            } else {
+                keyToHeader[key] = matched;
+            }
+        }
+
+        if (missingColumns.length) {
+            console.error('CSV is missing required columns:', missingColumns);
+            this.calculationMessage = 'CSV missing columns: ' + missingColumns.join(', ');
+            return;
+        }
+
+        // Helper comparators
+        const numericTolerance = 0.01;
+        const equalCompare = (formValue: any, csvValue: any) => {
+            if (formValue === null || formValue === undefined) return false;
+            if (typeof formValue === 'number') {
+                const csvNum = Number(csvValue);
+                return !isNaN(csvNum) && Math.abs(formValue - csvNum) <= numericTolerance;
+            }
+            // String comparison (case-insensitive, trim)
+            return String(formValue).toString().trim().toLowerCase() === String(csvValue).toString().trim().toLowerCase();
+        };
+
+        // Try to find a single row where ALL key params match using the mapped headers
+        const matchedRows = this.csvData.filter(row => {
+            for (const key of Object.keys(keyParamsToMatch)) {
+                const formValue = keyParamsToMatch[key as keyof typeof keyParamsToMatch];
+                const headerName = keyToHeader[key];
+                if (!headerName) return false;
+                const csvValue = row[headerName];
+                if (csvValue === undefined || csvValue === null) return false;
+                if (!equalCompare(formValue, csvValue)) return false;
+            }
+            return true;
         });
 
-        if (this.foundResult) {
+        if (matchedRows.length > 0) {
+            this.foundResult = matchedRows[0];
             console.log('Found Result:', this.foundResult);
             this.calculationMessage = 'Matching projection found.';
+            return;
+        }
+
+        // No single-row match: check whether each input value exists anywhere in its mapped CSV column
+        const missingInputs: string[] = [];
+        for (const key of Object.keys(keyParamsToMatch)) {
+            const formValue = keyParamsToMatch[key as keyof typeof keyParamsToMatch];
+            const headerName = keyToHeader[key];
+            if (!headerName) { missingInputs.push(key); continue; }
+            const existsSomewhere = this.csvData.some(row => {
+                const csvValue = row[headerName];
+                if (csvValue === undefined || csvValue === null) return false;
+                return equalCompare(formValue, csvValue);
+            });
+            if (!existsSomewhere) missingInputs.push(key);
+        }
+
+        if (missingInputs.length === 0) {
+            // Each input exists in the CSV somewhere, but not in the same row
+            console.info('All input values appear in CSV columns, but no single row contained them all.');
+            this.calculationMessage = 'No single matching projection found, but each input value exists somewhere in the CSV.';
         } else {
-            console.log('No matching record found for:', keyParamsToMatch);
-            this.calculationMessage = 'No matching projection found in the data for the specified key inputs.';
+            console.log('No matching record found. Missing inputs in CSV:', missingInputs);
+            this.calculationMessage = 'No matching projection found. The following inputs were not present in the CSV: ' + missingInputs.join(', ');
         }
     }
 
