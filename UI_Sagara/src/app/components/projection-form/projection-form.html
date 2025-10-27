@@ -1,0 +1,308 @@
+<div class="container mt-4">
+  <form [formGroup]="projectionForm" (ngSubmit)="onSubmit()">
+    <ul class="nav nav-pills mb-3 do_not_print" id="pills-tab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tab1-tab" data-bs-toggle="pill" data-bs-target="#inpdes" type="button"
+          role="tab">Input Design</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab2-tab" data-bs-toggle="pill" data-bs-target="#watsou" type="button"
+          role="tab">Water Source</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab3-tab" data-bs-toggle="pill" data-bs-target="#ionload" type="button"
+          role="tab">Ion Load</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab4-tab" data-bs-toggle="pill" data-bs-target="#gbsmartsof" type="button"
+          role="tab">Results</button>
+      </li>
+    </ul>
+
+    <div class="tab-content" id="pills-tabContent">
+      <div class="tab-pane show active do_not_print" id="inpdes" role="tabpanel">
+        <div class="row">
+          <div class="col-md-8">
+            <div class="row">
+              <div class="col-md-6">
+                <table class="table table-bordered border-dark align-middle">
+                  <tbody>
+                    <tr style="background-color: #efeff5">
+                      <td><label for="txtProjectName"><span class="required">*&nbsp;</span>Project Name</label></td>
+                      <td><input type="text" formControlName="txtProjectName" id="txtProjectName"></td>
+                    </tr>
+                    <tr style="background-color: #efeff5">
+                      <td><label for="txtDesignerName"><span class="required">*&nbsp;</span>Designer Name</label></td>
+                      <td><input type="text" formControlName="txtDesignerName" id="txtDesignerName"></td>
+                    </tr>
+                  </tbody>
+                </table>
+                <table class="table table-bordered border-dark align-middle">
+                  <thead>
+                    <tr style="background-color: #efeff5">
+                      <td colspan="2" style="text-align: center"><label>UOM</label></td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style="background-color: #fff2e6">
+                      <td><label for="drpflow"><span class="required">*&nbsp;</span>Flow</label></td>
+                      <td>
+                        <select formControlName="drpflow" id="drpflow" class="dropdowncss">
+                          <option value="m³/hr">m³/hr</option>
+                          <option value="gpm">gpm</option>
+                        </select>
+                      </td>
+                    </tr>
+                    <tr style="background-color: #fff2e6">
+                      <td><label for="drpPressure"><span class="required">*&nbsp;</span>Pressure</label></td>
+                      <td>
+                        <select formControlName="drpPressure" id="drpPressure" class="dropdowncss">
+                          <option value="psi">psi</option>
+                          <option value="bar">bar</option>
+                        </select>
+                      </td>
+                    </tr>
+                    <tr style="background-color: #fff2e6">
+                      <td><label for="drpTemperature"><span class="required">*&nbsp;</span>Temperature</label></td>
+                      <td>
+                        <select formControlName="drpTemperature" id="drpTemperature" class="dropdowncss">
+                          <option value="°C">°C</option>
+                          <option value="°F">°F</option>
+                        </select>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <table class="table table-bordered border-dark align-middle">
+                  <tbody>
+                    <tr style="background-color: #ebebe0">
+                      <td><label for="drpNoOfProposedStages"><span class="required">*&nbsp;</span>No of Proposed
+                          Stages</label></td>
+                      <td colspan="2">
+                        <select formControlName="drpNoOfProposedStages" id="drpNoOfProposedStages" class="dropdowncss">
+                          <option value="1">1</option>
+                          <option value="2">2</option>
+                          <option value="3">3</option>
+                        </select>
+                      </td>
+                    </tr>
+                    <tr style="background-color: #ebebe0; text-align: center">
+                      <td colspan="3">
+                        <img *ngIf="selectedStages === 1" src="/assets/images/Hydramem_Stage_1.png" alt="Stage1"
+                          style="width: 280px; height: 160px;"
+                          onerror="this.onerror=null;this.src='/assets/images/hydrmem_logo.jpg'">
+                        <img *ngIf="selectedStages === 2" src="/assets/images/Hydramem_Stage_2.png" alt="Stage2"
+                          style="width: 280px; height: 160px;"
+                          onerror="this.onerror=null;this.src='/assets/images/hydrmem_logo.jpg'">
+                        <img *ngIf="selectedStages === 3" src="/assets/images/Hydramem_Stage_3.png" alt="Stage3"
+                          style="width: 280px; height: 160px;"
+                          onerror="this.onerror=null;this.src='/assets/images/hydrmem_logo.jpg'">
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="col-md-6">
+                <table class="table table-bordered border-dark align-middle">
+                  <tbody>
+                    <tr style="background-color: #ffe6e6">
+                      <td><label for="txtDesiredPermeateFlowRate"><span class="required">*&nbsp;</span>Desired Permeate
+                          Flow Rate</label></td>
+                      <td><input type="number" formControlName="txtDesiredPermeateFlowRate"
+                          id="txtDesiredPermeateFlowRate" class="textboxcss number2dc"></td>
+                      <td><label>{{ flowUnit }}</label></td>
+                    </tr>
+                    <tr style="background-color: #ffe6e6">
+                      <td><label for="txtRecovery"><span class="required">*&nbsp;</span>Recovery</label></td>
+                      <td><input type="number" formControlName="txtRecovery" id="txtRecovery"
+                          class="textboxcss number2dc"></td>
+                      <td><label>%</label></td>
+                    </tr>
+                    <tr style="background-color: #ffe6e6">
+                      <td><label for="txtFeedFlow"><span class="required">*&nbsp;</span>Feed Flow</label></td>
+                      <td><input type="number" formControlName="txtFeedFlow" id="txtFeedFlow"
+                          class="textboxcss number2dc"></td>
+                      <td><label>{{ flowUnit }}</label></td>
+                    </tr>
+                    <tr style="background-color: #ffe6e6">
+                      <td><label for="txtConcentrateFlow">Concentrate flow</label></td>
+                      <td><input type="number" formControlName="txtConcentrateFlow" id="txtConcentrateFlow"
+                          class="textboxcss number2dc"></td>
+                      <td><label>{{ flowUnit }}</label></td>
+                    </tr>
+                  </tbody>
+                </table>
+                <table class="table table-bordered border-dark align-middle">
+                  <tbody>
+                    <tr style="background-color: #efeff5">
+                      <td><label for="noofwatersource"><span class="required">* </span>No of water sources</label></td>
+                      <td>
+                        <select formControlName="noofwatersource" id="noofwatersource" class="dropdowncss">
+                          <option value="1">1</option>
+                          <option value="2">2</option>
+                          <option value="3">3</option>
+                        </select>
+                      </td>
+                    </tr>
+                    <tr style="background-color: #ebebe0;">
+                      <td><label for="drpWaterSource1"><span class="required">* </span>Water Source 1</label></td>
+                      <td><select formControlName="drpWaterSource1" id="drpWaterSource1" class="dropdowncss">
+                          <option value="">Please Select</option>
+                          <option value="SEA WATER">SEA WATER</option>
+                        </select></td>
+                    </tr>
+                    <tr style="background-color: #ebebe0;">
+                      <td><label for="SDIVal1"><span class="required">* </span>SDI 1</label></td>
+                      <td><select formControlName="SDIVal1" id="SDIVal1" class="dropdowncss">
+                          <option value="">Please Select</option>
+                          <option value="1">1</option>
+                          <option value="2">2</option>
+                          <option value="3">3</option>
+                        </select></td>
+                    </tr>
+                    <tr style="background-color: #ebebe0">
+                      <td><label for="drpMembraneType"><span class="required">*&nbsp;</span>Membrane type</label></td>
+                      <td>
+                        <select formControlName="drpMembraneType" id="drpMembraneType" class="dropdowncss">
+                          <option value="">Please Select</option>
+                          <option value="HM 8040-BWE-400">HM 8040-BWE-400</option>
+                          <option value="HM 8040-FRE-400">HM 8040-FRE-400</option>
+                        </select>
+                      </td>
+                    </tr>
+                    <tr style="background-color: #ebebe0;">
+                      <td><label for="txtWaterTemperatute1"><span class="required">*&nbsp;</span>Water Temp 1 ({{
+                          temperatureUnit }})</label></td>
+                      <td><input type="number" formControlName="txtWaterTemperatute1" id="txtWaterTemperatute1"
+                          class="textboxcss number2dc"></td>
+                    </tr>
+                    <tr style="background-color: #ebebe0;">
+                      <td><span class="required">* </span><label for="pH1">pH 1</label></td>
+                      <td><input type="number" formControlName="pH1" id="pH1" class="textboxcss number2dc"></td>
+                    </tr>
+                    <tr style="background-color: #ebebe0">
+                      <td><label for="txtFeedWaterInletPressure">Intake Water pressure ({{ pressureUnit }})</label></td>
+                      <td><input type="number" formControlName="txtFeedWaterInletPressure"
+                          id="txtFeedWaterInletPressure" class="textboxcss number2dc"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <table class="table table-bordered border-dark align-middle">
+              <tbody>
+                <tr style="background-color: #ebebe0">
+                  <td [style.display]="selectedStages >= 1 ? 'table-cell' : 'none'"><label>Stage 1</label></td>
+                  <td [style.display]="selectedStages >= 2 ? 'table-cell' : 'none'"><label>Stage 2</label></td>
+                  <td [style.display]="selectedStages >= 3 ? 'table-cell' : 'none'"><label>Stage 3</label></td>
+                </tr>
+                <tr style="background-color: #efeff5">
+                  <td [attr.colspan]="selectedStages"><label><span class="required">*&nbsp;</span>No. Of pressure
+                      vessels</label></td>
+                </tr>
+                <tr style="background-color: #ffebcc">
+                  <td [style.display]="selectedStages >= 1 ? 'table-cell' : 'none'"><input type="number"
+                      formControlName="txtNoOfPressureVesselsStage1" id="txtNoOfPressureVesselsStage1"
+                      class="textboxcss"></td>
+                  <td [style.display]="selectedStages >= 2 ? 'table-cell' : 'none'"><input type="number"
+                      formControlName="txtNoOfPressureVesselsStage2" id="txtNoOfPressureVesselsStage2"
+                      class="textboxcss"></td>
+                  <td [style.display]="selectedStages >= 3 ? 'table-cell' : 'none'"><input type="number"
+                      formControlName="txtNoOfPressureVesselsStage3" id="txtNoOfPressureVesselsStage3"
+                      class="textboxcss"></td>
+                </tr>
+        <tr style="background-color: #efeff5">
+          <td [attr.colspan]="selectedStages"><label><span class="required">*&nbsp;</span>No. Of elements per
+            vessel</label></td>
+        </tr>
+        <tr style="background-color: #ffebcc">
+          <td [style.display]="selectedStages >= 1 ? 'table-cell' : 'none'"><input type="number"
+            formControlName="txtNoofElementsPerVesselStage1" id="txtNoofElementsPerVesselStage1"
+            class="textboxcss"></td>
+          <td [style.display]="selectedStages >= 2 ? 'table-cell' : 'none'"><input type="number"
+            formControlName="txtNoofElementsPerVesselStage2" id="txtNoofElementsPerVesselStage2"
+            class="textboxcss"></td>
+          <td [style.display]="selectedStages >= 3 ? 'table-cell' : 'none'"><input type="number"
+            formControlName="txtNoofElementsPerVesselStage3" id="txtNoofElementsPerVesselStage3"
+            class="textboxcss"></td>
+        </tr>
+                <tr style="background-color: #efeff5">
+                  <td [attr.colspan]="selectedStages"><label><span class="required">*&nbsp;</span>Fouling Factor</label>
+                  </td>
+                </tr>
+                <tr style="background-color: #ffebcc">
+                  <td><input type="number" formControlName="txtFoulingFactor" id="txtFoulingFactor"
+                      class="textboxcss number2dc"></td>
+                  <td *ngIf="selectedStages > 1"></td>
+                  <td *ngIf="selectedStages > 2"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane do_not_print" id="watsou" role="tabpanel">
+        <p>Build this tab based on the Water Source section of index2.html, using *ngIf="selectedWaterSources >= n" to
+          show/hide columns for sources 2 and 3. Bind inputs like `quantitywater1`, `drpWaterSource1`, `SDIVal1`,
+          `Temperature1`, `pH1`, and all ion inputs (`sodmgl1`, `calmgl1` etc.)</p>
+        <div class="row">
+          <div class="col-2">Sodium (Na)</div>
+          <div class="col-2 s1" *ngIf="selectedWaterSources >= 1">
+            <input type="number" formControlName="sodmgl1"> mg/L
+            <input type="number" formControlName="sodcaco1"> ppm CaCO3
+          </div>
+          <div class="col-2 s2" *ngIf="selectedWaterSources >= 2">
+            <input type="number" formControlName="sodmgl2"> mg/L
+            <input type="number" formControlName="sodcaco2"> ppm CaCO3
+          </div>
+          <div class="col-2 s3" *ngIf="selectedWaterSources >= 3">
+            <input type="number" formControlName="sodmgl3"> mg/L
+            <input type="number" formControlName="sodcaco3"> ppm CaCO3
+          </div>
+          <div class="col-2">
+            <input type="text" [value]="projectionForm.get('sodmglfinal')?.value | number:'1.2-2'" readonly> mg/L
+            <input type="text" [value]="projectionForm.get('sodcacofinal')?.value | number:'1.2-2'" readonly> ppm CaCO3
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane do_not_print" id="ionload" role="tabpanel">
+        <p>Build this tab based on the Ion Load section of index2.html. The input fields here should probably be BOUND
+          to the calculated 'final' water quality values derived from the Water Source tab. The 'Adjusted' values likely
+          come from pH adjustment calculations (if implemented).</p>
+        <div class="row">
+          <div class="col-2">Sodium (Na)</div>
+          <div class="col-2"><input type="number" formControlName="sodmgl" readonly> mg/L</div>
+          <div class="col-2"><input type="number" formControlName="sodcaco" readonly> ppm CaCO3</div>
+          <div class="col-2"><label id="sodmgladj">0</label> mg/L (Adj)</div>
+          <div class="col-2"><label id="sodcacoadj">0</label> ppm CaCO3 (Adj)</div>
+        </div>
+      </div>
+
+      <div class="tab-pane print_result" id="gbsmartsof" role="tabpanel">
+        <div *ngIf="submitted && calculationMessage" class="alert"
+          [ngClass]="{'alert-success': foundResult, 'alert-warning': !foundResult}">
+          {{ calculationMessage }}
+        </div>
+        <app-results-display [result]="foundResult" [submitted]="submitted"
+          [projectName]="projectionForm.get('txtProjectName')?.value"
+          [designerName]="projectionForm.get('txtDesignerName')?.value" [flowUnit]="flowUnit"
+          [pressureUnit]="pressureUnit" [fluxUnit]="fluxUnit" [temperatureUnit]="temperatureUnit">
+        </app-results-display>
+      </div>
+    </div>
+
+    <div class="mt-3 do_not_print">
+      <button type="submit" class="btn btn-success">Run Projection Lookup</button>
+      <button type="button" class="btn btn-secondary ms-2" (click)="clearResult()">Clear Results</button>
+      <div *ngIf="submitted && calculationMessage" class="alert mt-2"
+        [ngClass]="{'alert-success': foundResult, 'alert-warning': !foundResult}">
+        {{ calculationMessage }}
+      </div>
+    </div>
+
+  </form>
+</div>

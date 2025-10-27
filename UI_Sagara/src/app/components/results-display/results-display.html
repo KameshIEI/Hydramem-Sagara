@@ -1,0 +1,112 @@
+<div *ngIf="result; else noResultOrSubmit">
+
+  <div class="print_header">
+    <div class="row">
+      <div class="col-md-12 text-center">
+         <h2>SMART Projection Result</h2>
+         <hr>
+      </div>
+    </div>
+  </div>
+
+   <h4>Design Summary</h4>
+   <table class="table table-bordered">
+       <tr style="background-color: #ebebe0">
+            <td>Project: {{ projectName }}</td>
+            <td>Designer: {{ designerName }}</td>
+            <td>Date: {{ currentDate }}</td>
+       </tr>
+       <tr style="background-color: #f9ecf2">
+            <td>Membrane: {{ result.membrane_type }}</td> <td>Water Source: {{ result.water_source }}</td> <td>SDI: {{ result.sdi }}</td> </tr>
+       <tr style="background-color: #f9ecf2">
+            <td>Feed Flow ({{ flowUnit }}): {{ result.feed_flow_m3_hr | number:'1.2-2' }}</td>
+            <td>Temperature ({{ temperatureUnit }}): {{ result.feed_temperature | number:'1.1-1' }}</td>
+            <td>pH: {{ result.feed_water_ph | number:'1.1-1' }}</td>
+       </tr>
+       <tr style="background-color: #f9ecf2">
+            <td>Product Flow ({{ flowUnit }}): {{ result.permeate_flow | number:'1.2-2' }}</td> <td>Recovery (%): {{ result.recovery | number:'1.1-1' }}</td>
+            <td>Feed Pressure ({{ pressureUnit }}): {{ result.feed_pressure_bar | number:'1.2-2' }}</td>
+       </tr>
+        </table>
+
+    <h4>Water Quality (ppm)</h4>
+    <table class="table table-bordered table-sm">
+        <thead style="background-color: #ebebe0;">
+            <tr>
+                <th>Ionic Species</th>
+                <th>Feed</th>
+                <th>Adj. Feed</th> <th>Permeate (Avg)</th>
+                <th>Concentrate</th> </tr>
+        </thead>
+        <tbody>
+            <tr style="background-color: #fff2e6">
+                 <td>Sodium (Na)</td>
+                 <td>{{ result.na_fw | number:'1.2-2' }}</td>
+                 <td>{{ result.na_fw | number:'1.2-2' }}</td> <td>{{ result.na_p | number:'1.2-2' }}</td>
+                 <td>{{ result.na_c | number:'1.2-2' }}</td>
+             </tr>
+              <tr style="background-color: #fff2e6">
+                 <td>Calcium (Ca)</td>
+                 <td>{{ result.ca_fw | number:'1.2-2' }}</td>
+                 <td>{{ result.ca_fw | number:'1.2-2' }}</td>
+                 <td>{{ result.ca_p | number:'1.2-2' }}</td>
+                 <td>{{ result.ca_c | number:'1.2-2' }}</td>
+             </tr>
+             <tr style="background-color: #ffe6e6">
+                 <td>Chloride (Cl)</td>
+                 <td>{{ result.cl_fw | number:'1.2-2' }}</td>
+                 <td>{{ result.cl_fw | number:'1.2-2' }}</td>
+                 <td>{{ result.cl_p | number:'1.2-2' }}</td>
+                 <td>{{ result.cl_c | number:'1.2-2' }}</td>
+             </tr>
+             <tr style="background-color: #e6ccb3"> <td>TDS</td>
+                  <td>{{ result.feed_water_tds | number:'1.2-2' }}</td>
+                  <td>{{ result.feed_water_tds | number:'1.2-2' }}</td>
+                  <td>{{ result.permeate_tds | number:'1.2-2' }}</td>
+                  <td>{{ result.concentrate_tds | number:'1.2-2' }}</td>
+             </tr>
+        </tbody>
+    </table>
+
+     <h4>Stage 1 Details</h4>
+      <table class="table table-bordered table-sm">
+         <thead style="background-color: #ebebe0;">
+             <tr>
+                <th>Parameter</th>
+                <th>Value</th>
+                <th>Unit</th>
+             </tr>
+         </thead>
+         <tbody>
+              <tr><td>Feed Flow</td><td>{{ result.feed_flow_m3_hr | number:'1.2-2' }}</td><td>{{ flowUnit }}</td></tr>
+              <tr><td>Feed Pressure</td><td>{{ result.feed_pressure_bar | number:'1.2-2' }}</td><td>{{ pressureUnit }}</td></tr>
+              <tr><td>Permeate Flow</td><td>{{ result.permeate_flow | number:'1.2-2' }}</td> <td>{{ flowUnit }}</td></tr>
+              <tr><td>Recovery %</td><td>{{ result.recovery | number:'1.1-1' }}</td><td>%</td></tr>
+              <tr><td>Feed TDS</td><td>{{ result.feed_water_tds | number:'1.2-2' }}</td><td>ppm</td></tr>
+              <tr><td>Permeate TDS</td><td>{{ result.permeate_tds | number:'1.2-2' }}</td><td>ppm</td></tr>
+              <tr><td>Concentrate TDS</td><td>{{ result.concentrate_tds | number:'1.2-2' }}</td><td>ppm</td></tr>
+              <tr><td>Flux</td><td>{{ result.flux_lmh | number:'1.2-2' }}</td><td>{{ fluxUnit }}</td></tr>
+              </tbody>
+      </table>
+
+      <h4>Scaling Potential</h4>
+        <table class="table table-bordered table-sm">
+             <thead style="background-color: #ebebe0;">
+                 <tr><th>Indicator</th><th>Feed (%)</th><th>Concentrate (%)</th></tr>
+             </thead>
+             <tbody>
+                  <tr><td>CaSO4 / ksp * 100</td><td>{{ result['caso4_ksp_100_%_fw'] | number:'1.2-2' }}</td><td>{{ result['caso4_ksp_100_%_c'] | number:'1.2-2' }}</td></tr>
+                  <tr><td>SrSO4 / ksp * 100</td><td>{{ result['srso4_ksp_100_%_fw'] | number:'1.2-2' }}</td><td>{{ result['srso4_ksp_100_%_c'] | number:'1.2-2' }}</td></tr>
+                  <tr><td>BaSO4 / ksp * 100</td><td>{{ result['baso4_ksp_100_%_fw'] | number:'1.2-2' }}</td><td>{{ result['baso4_ksp_100_%_c'] | number:'1.2-2' }}</td></tr>
+                   <tr><td>SiO2 saturation</td><td>{{ result['sio2_saturation_%_fw'] | number:'1.2-2' }}</td><td>{{ result['sio2_saturation_%_c'] | number:'1.2-2' }}</td></tr>
+                   <tr><td>CaF2 / ksp * 100</td><td>{{ result['caf2_ksp_100_%_fw'] | number:'1.2-2' }}</td><td>{{ result['caf2_ksp_100_%_c'] | number:'1.2-2' }}</td></tr>
+                   </tbody>
+        </table>
+
+</div>
+
+<ng-template #noResultOrSubmit>
+  <div *ngIf="!submitted" class="alert alert-info">
+    Please enter inputs and click "Run Projection Lookup".
+  </div>
+</ng-template>
