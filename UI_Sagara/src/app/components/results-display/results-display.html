@@ -1,81 +1,15 @@
-<div class="results-container">
-  <!-- Show message if no data submitted -->
-  <div *ngIf="!submitted" class="alert alert-info">
-    Please enter inputs and click "Run Projection Lookup".
-  </div>
+<div *ngIf="result; else noResultOrSubmit">
 
-  <!-- Show results when data is submitted -->
-  <div *ngIf="submitted">
-    <!-- Show all matching candidates if there are multiple -->
-    <div *ngIf="candidates && candidates.length > 1" class="mb-4">
-      <div class="print_header">
-        <div class="row">
-          <div class="col-md-12">
-            <h4>{{ candidates.length }} Matching Projections Found</h4>
-          </div>
-        </div>
-      </div>
-    
-    <div class="card">
-      <div class="card-header">
-        <h5 class="mb-0">Available Projections</h5>
-      </div>
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-bordered table-hover mb-0">
-            <thead class="table-light">
-              <tr>
-                <th>#</th>
-                <th>Feed Flow (m3/hr)</th>
-                <th>Recovery(%)</th>
-                <th>Feed Temperature</th>
-                <th>Feed water pH</th>
-                <th>Feed Pressure(bar)</th>
-                <th>Permeate TDS</th>
-                <th>Feed Water TDS</th>
-                <th>Concentrate TDS</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let c of candidates; let i = index" 
-                  [class.table-primary]="result === c">
-                <td>{{ i + 1 }}</td>
-                <td>{{ formatValue(c.__raw['Feed Flow (m3/hr)']) }}</td>
-                <td>{{ formatValue(c.__raw['Recovery(%)']) }}</td>
-                <td>{{ formatValue(c.__raw['Feed Temperature']) }}</td>
-                <td>{{ formatValue(c.__raw['Feed water pH']) }}</td>
-                <td>{{ formatValue(c.__raw['Feed Pressure(bar)']) }}</td>
-                <td>{{ formatValue(c.__raw['Permeate TDS']) }}</td>
-                <td>{{ formatValue(c.__raw['Feed Water TDS']) }}</td>
-                <td>{{ formatValue(c.__raw['Concentrate TDS']) }}</td>
-                <td>
-                  <button class="btn btn-primary btn-sm" 
-                          (click)="selectCandidate.emit(i)" 
-                          [disabled]="result === c">
-                    {{ result === c ? 'Selected' : 'Select' }}
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+  <div class="print_header">
+    <div class="row">
+      <div class="col-md-12 text-center">
+         <h2>SMART Projection Result</h2>
+         <hr>
       </div>
     </div>
   </div>
 
-  <!-- Show selected result details -->
-  <div *ngIf="result" class="mt-4">
-    <div class="print_header">
-      <div class="row">
-        <div class="col-md-12 text-center">
-           <h2>SMART Projection Result</h2>
-           <hr>
-        </div>
-      </div>
-    </div>
-
-    <h4>Design Summary</h4>
+   <h4>Design Summary</h4>
    <table class="table table-bordered">
        <tr style="background-color: #ebebe0">
             <td>Project: {{ projectName }}</td>
@@ -94,17 +28,6 @@
             <td>Feed Pressure ({{ pressureUnit }}): {{ result.feed_pressure_bar | number:'1.2-2' }}</td>
        </tr>
         </table>
-
-            <h4>All Projection Variables</h4>
-            <table class="table table-bordered table-sm">
-              <thead style="background-color: #ebebe0;"><tr><th>Variable</th><th>Value</th></tr></thead>
-              <tbody>
-                  <tr *ngFor="let hdr of getRawHeaders()">
-                    <td class="var-name">{{ hdr }}</td>
-                    <td class="var-value">{{ formatValue(result.__raw[hdr]) }}</td>
-                  </tr>
-              </tbody>
-            </table>
 
     <h4>Water Quality (ppm)</h4>
     <table class="table table-bordered table-sm">
@@ -182,6 +105,8 @@
 
 </div>
 
-<div *ngIf="!submitted" class="alert alert-info">
-  Please enter inputs and click "Run Projection Lookup".
-</div>
+<ng-template #noResultOrSubmit>
+  <div *ngIf="!submitted" class="alert alert-info">
+    Please enter inputs and click "Run Projection Lookup".
+  </div>
+</ng-template>
