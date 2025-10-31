@@ -289,10 +289,17 @@
           [ngClass]="{'alert-success': foundResult, 'alert-warning': !foundResult}">
           {{ calculationMessage }}
         </div>
-        <app-results-display [result]="foundResult" [submitted]="submitted"
+        <app-results-display 
+          [result]="foundResult"
+          [candidates]="foundCandidates"
+          [submitted]="submitted"
           [projectName]="projectionForm.get('txtProjectName')?.value"
-          [designerName]="projectionForm.get('txtDesignerName')?.value" [flowUnit]="flowUnit"
-          [pressureUnit]="pressureUnit" [fluxUnit]="fluxUnit" [temperatureUnit]="temperatureUnit">
+          [designerName]="projectionForm.get('txtDesignerName')?.value" 
+          [flowUnit]="flowUnit"
+          [pressureUnit]="pressureUnit" 
+          [fluxUnit]="fluxUnit" 
+          [temperatureUnit]="temperatureUnit"
+          (selectCandidate)="selectCandidate($event)">
         </app-results-display>
       </div>
     </div>
