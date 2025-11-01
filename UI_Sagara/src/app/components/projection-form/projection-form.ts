@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl } from '@angular/forms'; // Import ReactiveFormsModule here
 import { CommonModule } from '@angular/common'; // Import CommonModule for *ngIf, etc.
 import { DataService } from '../../services/data';
@@ -23,6 +23,12 @@ export class ProjectionFormComponent implements OnInit, OnDestroy {
   projectionForm: FormGroup;
   csvData: any[] = [];
   foundResult: any = null;
+  result: any = null; // Add this property
+    // If CSV contains multiple candidate rows matching the key inputs,
+    // they will be stored here so the UI can present them to the user.
+    foundCandidates: any[] = [];
+    // Pre-computed aggregated candidate (numeric fields averaged) when duplicates exist
+    aggregatedResult: any | null = null;
   submitted: boolean = false;
   calculationMessage: string = '';
   private formChangesSubscription: Subscription | null = null;
@@ -35,7 +41,7 @@ export class ProjectionFormComponent implements OnInit, OnDestroy {
   fluxUnit: string = 'lmh';
   temperatureUnit: string = '°C';
 
-  constructor(private fb: FormBuilder, private dataService: DataService) {
+  constructor(private fb: FormBuilder, private dataService: DataService, private cdr: ChangeDetectorRef) {
      // --- Identical form group definition from previous answer ---
      this.projectionForm = this.fb.group({
          txtProjectName: ['', Validators.required],
@@ -467,9 +473,83 @@ export class ProjectionFormComponent implements OnInit, OnDestroy {
         });
 
         if (matchedRows.length > 0) {
-            this.foundResult = matchedRows[0];
-            console.log('Found Result:', this.foundResult);
-            this.calculationMessage = 'Matching projection found.';
+            // When multiple rows match the search keys we 1) expose all candidates so the
+            // UI can show them and allow selection, and 2) create a safe aggregated
+            // mapping (numeric fields averaged) so the app can continue automatically.
+
+            // Map a raw CSV row into the mapped object used by ResultsDisplay
+            const headerToKey = (h: string) => {
+                if (!h) return '';
+                let k = String(h).toLowerCase();
+                k = k.replace(/³/g, '3').replace(/°/g, '').replace(/µ/g, 'u');
+                k = k.replace(/[\/\*(),]+/g, '_');
+                k = k.replace(/\s+/g, '_');
+                k = k.replace(/__+/g, '_');
+                k = k.replace(/^_+|_+$/g, '');
+                return k;
+            };
+
+            const mapRaw = (raw: any) => {
+                const mapped: any = {};
+                for (const h of Object.keys(raw)) {
+                    const key = headerToKey(h);
+                    mapped[key] = raw[h];
+                    const alt = key.replace(/%/g, '').replace(/__+/g, '_').replace(/^_+|_+$/g, '');
+                    if (alt && alt !== key) mapped[alt] = raw[h];
+                    mapped[h] = raw[h];
+                }
+                mapped.__raw = raw;
+                mapped.__matched_at = new Date().toISOString();
+                return mapped;
+            };
+
+            // Build candidate list
+            this.foundCandidates = matchedRows.map(r => mapRaw(r));
+
+            // If only one candidate, use it. If multiple, compute an aggregated candidate
+            if (this.foundCandidates.length === 1) {
+                this.foundResult = { ...this.foundCandidates[0] };
+                this.aggregatedResult = null;
+                this.calculationMessage = 'Matching projection found.';
+                console.log('Found single candidate:', this.foundResult);
+                return;
+            }
+
+            // Multiple candidates: create an aggregated mapping that averages numeric columns
+            const aggregate = (rows: any[]) => {
+                // Collect header names from raw rows
+                const headers = Object.keys(rows[0].__raw || {});
+                const aggRaw: any = {};
+                for (const h of headers) {
+                    const vals = rows.map(r => r.__raw[h]).filter(v => v !== undefined && v !== null && v !== '');
+                    // Try numeric average where possible
+                    const nums = vals.map(v => Number(v)).filter(n => !isNaN(n));
+                    if (nums.length === vals.length && nums.length > 0) {
+                        const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
+                        aggRaw[h] = parseFloat(avg.toFixed(4));
+                    } else {
+                        // Fall back to the most common string value
+                        const counts: any = {};
+                        for (const v of vals) counts[String(v)] = (counts[String(v)] || 0) + 1;
+                        const entries = Object.entries(counts);
+                        if (entries.length) {
+                            entries.sort((a: any, b: any) => b[1] - a[1]);
+                            aggRaw[h] = entries[0][0];
+                        } else {
+                            aggRaw[h] = '';
+                        }
+                    }
+                }
+                const mappedAgg = mapRaw(aggRaw);
+                mappedAgg.__aggregated_from = rows.length;
+                return mappedAgg;
+            };
+
+            this.aggregatedResult = aggregate(this.foundCandidates);
+            // Do not default to aggregated result; wait for user selection
+            this.foundResult = null;
+            this.calculationMessage = `Multiple matching projections found (${this.foundCandidates.length}). Please select a row to view the SMART Projection Result.`;
+            console.log('Found multiple candidates, waiting for selection. Candidates:', this.foundCandidates.length);
             return;
         }
 
@@ -502,10 +582,44 @@ export class ProjectionFormComponent implements OnInit, OnDestroy {
         this.foundResult = null;
         this.submitted = false;
         this.calculationMessage = '';
+        // Clear any candidate/aggregation state we may have built
+        this.foundCandidates = [];
+        this.aggregatedResult = null;
         // Also clear any persisted placeholders just in case
         this.clearPersistedData();
         console.log('Result cleared by user.');
     }
+
+    // Allow selecting a specific candidate row (index into foundCandidates)
+    // selectCandidate(index: number): void {
+    //     if (!Array.isArray(this.foundCandidates) || index < 0 || index >= this.foundCandidates.length) return;
+    //     this.foundResult = this.foundCandidates[index];
+    //     this.calculationMessage = `Using selected candidate ${index + 1} of ${this.foundCandidates.length}.`;
+    //     // When user explicitly selects, we no longer need aggregated default
+    //     this.aggregatedResult = null;
+    //     console.log('User selected candidate:', index, this.foundResult);
+    // }
+    // in component/projection.ts file
+
+selectCandidate(index: number): void {
+    if (!Array.isArray(this.foundCandidates) || index < 0 || index >= this.foundCandidates.length) return;
+
+    this.foundResult = { ...this.foundCandidates[index] };
+
+    // 🔥 CRITICAL UPDATE: Assign the selected candidate to the 'result' property
+    // that the HTML template is currently using.
+    this.result = this.foundResult; // <--- ADD/CONFIRM THIS LINE
+
+    this.calculationMessage = `Using selected candidate ${index + 1} of ${this.foundCandidates.length}.`;
+    // When user explicitly selects, we no longer need aggregated default
+    this.aggregatedResult = null;
+    // Clear candidates to hide the selection table after selection
+    this.foundCandidates = [];
+    console.log('User selected candidate:', index, this.foundResult);
+
+    // Trigger change detection to update the view
+    this.cdr.detectChanges();
+}
 
 
    // Helper to see validation errors
